@@ -1,0 +1,32 @@
+{
+    "sql": {
+        "host": "localhost",
+        "port": 5432,
+        "database": "your_database",
+        "user": "your_username",
+        "password": "your_password",
+        "dialect": "postgresql",
+        "table": "mutations",
+        "query": null
+    },
+    "columns": {
+        "pkey": "pkey",
+        "label": "is_pathogenic",
+        "is_synonymous": "is_synonymous",
+        "gene": "gene"
+    },
+    "features": {
+        "auto_detect": true,
+        "exclude": [
+            "pkey",
+            "gene",
+            "chrom",
+            "pos",
+            "ref",
+            "alt",
+            "mutation_id",
+            "transcript_id"
+        ],
+        "include": null
+    }
+}

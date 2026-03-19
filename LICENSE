@@ -1,0 +1,54 @@
+SynPathML Academic Source-Available License v1.0
+
+Copyright (c) 2023-2026 Jacob Goldmintz. All rights reserved.
+
+1. DEFINITIONS
+
+   "Software" means the source code, model architectures, trained weights,
+   configuration files, and documentation in this repository.
+
+   "Output" means any data, predictions, scores, features, or results
+   produced by executing the Software. Output expressly excludes trained
+   model weights, checkpoints, and any serialized model parameters, which
+   are considered derivative works of the Software and subject to the same
+   restrictions as the Software itself.
+
+2. PERMITTED USES
+
+   a. You may view and download the Software for the sole purpose of
+      private, non-commercial academic research.
+
+   b. You may run the Software and use the Output for private research
+      only.
+
+3. RESTRICTIONS
+
+   a. PUBLICATIONS — No peer-reviewed paper, preprint, poster, thesis,
+      dissertation, conference proceeding, or publicly distributed written
+      work may describe, evaluate, benchmark, reproduce, or use the
+      methods, Output, or any aspect of the Software.
+
+   b. PATENTS — You may not file, claim, or enforce any patent or patent
+      application covering the methods, architectures, training procedures,
+      or any other inventions embodied in or derived from the Software.
+
+   c. COMMERCIAL USE — You may not use the Software, its methods, or the
+      Output for commercial purposes.
+
+   d. REDISTRIBUTION — You may not redistribute, sublicense, or publicly
+      host the Software, modified versions of it, trained model weights,
+      or the Output.
+
+4. NO WARRANTY
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+   OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+   IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES,
+   OR OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE OR OUTPUT.
+
+5. TERMINATION
+
+   This license terminates automatically if you violate any of its terms.
+   Upon termination, you must cease all use and destroy all copies of the
+   Software in your possession.
