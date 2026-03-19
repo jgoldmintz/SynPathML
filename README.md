@@ -1,6 +1,6 @@
 # SynPathML: Disease-Associated Mutation Prediction Pipeline
 
-A three-stage machine learning pipeline for predicting disease-associated synonymous mutations using BioFeatureFactory features.
+A three-stage machine learning pipeline for predicting disease-associated synonymous mutations. Accepts any numeric feature matrix from a SQL database or TSV file.
 
 ## Overview
 
@@ -38,7 +38,6 @@ SynPathML/
 ├── stage2_analysis.py          # Feature relationship analysis
 ├── stage3_neural_network.py    # Neural network training
 ├── config.template.json        # Configuration template
-├── stage_explanations.txt      # Detailed documentation
 └── README.md
 ```
 
@@ -230,6 +229,6 @@ for arch in base attention gated; do
 done
 ```
 
-## Documentation
+## License
 
-See `stage_explanations.txt` for detailed pseudocode explanations of each stage's implementation.
+See [LICENSE](LICENSE) for terms. All rights reserved.
