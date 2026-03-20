@@ -320,9 +320,100 @@ class DataLoader:
 
         return self.df
 
+    @staticmethod
+    def _read_single_tsv(filepath: Path) -> pd.DataFrame:
+        """Read a single TSV/CSV with delimiter auto-detection."""
+        with open(filepath, "r") as f:
+            first_line = f.readline()
+        if "\t" in first_line:
+            sep = "\t"
+        elif "," in first_line:
+            sep = ","
+        else:
+            sep = "\t"
+        return pd.read_csv(filepath, sep=sep)
+
+    def _resolve_pipeline_prefix(self, stem: str) -> str:
+        """
+        Resolve filename stem to canonical pipeline prefix.
+
+        Checks pipeline_map from config. Tries exact match, then strips
+        leading gene name (e.g., 'SMN2.spliceai' -> tries 'spliceai').
+        Falls back to stem with dots replaced by underscores.
+        """
+        tsv_dir_config = self.config.get("tsv_dir", {})
+        pipeline_map = tsv_dir_config.get("pipeline_map", {})
+
+        # Exact match
+        if stem in pipeline_map:
+            return pipeline_map[stem]
+
+        # Strip leading gene name: GENE.pipeline.subtype -> try pipeline.subtype, then pipeline
+        parts = stem.split(".")
+        if len(parts) >= 2:
+            for i in range(1, len(parts)):
+                candidate = ".".join(parts[i:])
+                if candidate in pipeline_map:
+                    return pipeline_map[candidate]
+            # No match in map — use non-gene portion
+            return "_".join(parts[1:])
+
+        return stem
+
+    def _load_ground_truth(self, filepath: Path) -> pd.DataFrame:
+        """
+        Load ground truth CSV and normalize columns/values.
+
+        Column mapping and value remapping are driven by
+        config['tsv_dir']['ground_truth_columns'].
+        """
+        df = self._read_single_tsv(filepath)
+
+        tsv_dir_config = self.config.get("tsv_dir", {})
+        gt_col_map = tsv_dir_config.get("ground_truth_columns", {})
+
+        # Rename columns per config mapping
+        rename_map = {orig: target for orig, target in gt_col_map.items() if orig in df.columns}
+        df = df.rename(columns=rename_map)
+
+        col_config = self.config.get("columns", {})
+        syn_col = col_config.get("is_synonymous", "is_synonymous")
+        label_col = col_config.get("label", "is_pathogenic")
+
+        # Remap is_synonymous: 2 -> 1 (synonymous), 1 -> 0 (nonsynonymous)
+        if syn_col in df.columns:
+            df[syn_col] = (df[syn_col] == 2).astype(int)
+
+        # Remap label: 1 -> 1 (disease), 2 -> 0 (neutral)
+        if label_col in df.columns:
+            df[label_col] = (df[label_col] == 1).astype(int)
+
+        # Keep only mapped columns that exist
+        pkey_col = col_config.get("pkey", "pkey")
+        gene_col = col_config.get("gene", "gene")
+        keep = [c for c in [pkey_col, gene_col, syn_col, label_col] if c in df.columns]
+        df = df[keep]
+
+        if self.logger:
+            self.logger.info(f"Ground truth: {len(df)} rows from {filepath.name}")
+
+        return df
+
+    def _is_ground_truth(self, filepath: Path) -> bool:
+        """Check if a file is a ground truth file by inspecting its header."""
+        tsv_dir_config = self.config.get("tsv_dir", {})
+        gt_col_map = tsv_dir_config.get("ground_truth_columns", {})
+        if not gt_col_map:
+            return False
+
+        with open(filepath, "r") as f:
+            first_line = f.readline()
+
+        return any(col_name in first_line for col_name in gt_col_map.keys())
+
     def load_from_tsv(self, filepath: Union[str, Path]) -> pd.DataFrame:
         """
-        Load data from TSV file.
+        Load data from a single TSV/CSV file.
 
         Args:
             filepath: Path to TSV file
@@ -331,25 +422,89 @@ class DataLoader:
             DataFrame with features and labels
         """
         filepath = Path(filepath)
-
         if not filepath.exists():
             raise FileNotFoundError(f"File not found: {filepath}")
 
-        # Detect delimiter
-        with open(filepath, "r") as f:
-            first_line = f.readline()
-
-        if "\t" in first_line:
-            sep = "\t"
-        elif "," in first_line:
-            sep = ","
-        else:
-            sep = "\t"
-
-        self.df = pd.read_csv(filepath, sep=sep)
+        self.df = self._read_single_tsv(filepath)
 
         if self.logger:
             self.logger.info(f"Loaded {len(self.df)} rows from {filepath}")
+
+        return self.df
+
+    def load_from_tsv_dir(self, directory: Union[str, Path]) -> pd.DataFrame:
+        """
+        Load multiple pipeline TSV files from a directory and join on pkey.
+
+        Automatically detects the ground truth file by checking headers
+        against config['tsv_dir']['ground_truth_columns']. Pipeline output
+        columns are prefixed with the canonical pipeline name. Ground truth
+        columns are mapped to standard names (pkey, is_pathogenic, etc.).
+
+        Args:
+            directory: Directory containing pipeline TSVs and ground truth CSV
+
+        Returns:
+            DataFrame with all pipeline features joined on pkey
+        """
+        directory = Path(directory)
+        if not directory.is_dir():
+            raise NotADirectoryError(f"Not a directory: {directory}")
+
+        col_config = self.config.get("columns", {})
+        pkey_col = col_config.get("pkey", "pkey")
+
+        # Discover all TSV/CSV files
+        files = sorted(
+            f for f in directory.iterdir()
+            if f.suffix.lower() in (".tsv", ".csv", ".txt") and f.is_file()
+        )
+        if not files:
+            raise FileNotFoundError(f"No TSV/CSV files found in {directory}")
+
+        ground_truth_df = None
+        pipeline_dfs = []
+
+        for filepath in files:
+            if self._is_ground_truth(filepath):
+                ground_truth_df = self._load_ground_truth(filepath)
+                continue
+
+            df = self._read_single_tsv(filepath)
+            if pkey_col not in df.columns:
+                if self.logger:
+                    self.logger.warning(f"Skipping {filepath.name}: no '{pkey_col}' column")
+                continue
+
+            prefix = self._resolve_pipeline_prefix(filepath.stem)
+            rename_map = {col: f"{prefix}_{col}" for col in df.columns if col != pkey_col}
+            df = df.rename(columns=rename_map)
+            pipeline_dfs.append(df)
+
+            if self.logger:
+                self.logger.info(f"Loaded {filepath.name} -> prefix '{prefix}_' ({len(df)} rows, {len(df.columns)} cols)")
+
+        if not pipeline_dfs:
+            raise ValueError(f"No valid pipeline TSV files found in {directory}")
+
+        # Outer join all pipeline outputs
+        merged = pipeline_dfs[0]
+        for df in pipeline_dfs[1:]:
+            merged = merged.merge(df, on=pkey_col, how="outer")
+
+        # Join ground truth (left join — only keep mutations with labels)
+        if ground_truth_df is not None:
+            merged = merged.merge(ground_truth_df, on=pkey_col, how="left")
+            if self.logger:
+                self.logger.info(f"Joined ground truth ({len(ground_truth_df)} labeled mutations)")
+        else:
+            if self.logger:
+                self.logger.warning("No ground truth file detected in directory")
+
+        self.df = merged
+
+        if self.logger:
+            self.logger.info(f"Merged {len(pipeline_dfs)} pipeline files -> {merged.shape[0]} rows, {merged.shape[1]} columns")
 
         return self.df
 
@@ -691,6 +846,11 @@ def main():
         action="store_true",
         help="Load from SQL database (uses config file)"
     )
+    source_group.add_argument(
+        "--tsv-dir",
+        type=str,
+        help="Directory of pipeline TSV files + ground truth CSV (joined on pkey)"
+    )
 
     # Config
     parser.add_argument(
@@ -739,6 +899,8 @@ def main():
 
     if args.tsv:
         loader.load_from_tsv(args.tsv)
+    elif args.tsv_dir:
+        loader.load_from_tsv_dir(args.tsv_dir)
     else:
         loader.connect_sql()  # Uses config
         loader.load_from_sql()  # Uses config

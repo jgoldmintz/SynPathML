@@ -381,8 +381,9 @@ class FeatureAnalyzer:
             "glycosylation": ["netnglyc_"],
             "phosphorylation": ["netphos_"],
             "protein_structure": ["netsurfp_"],
-            "evolution": ["evmutation_"],
+            "evolution": ["evmutation_", "evmutation_codon_", "evmutation_protein_"],
             "immune": ["netmhc_"],
+            "translational_efficiency": ["codon_usage_", "rare_codon_"],
         }
 
         mechanism_groups = {}

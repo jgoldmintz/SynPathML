@@ -1027,6 +1027,25 @@ def main():
             recommended_features = load_json(rec_file).get("recommended_features", [])
             logger.info(f"Loaded {len(recommended_features)} recommended features")
 
+    # Subset to recommended features from Stage 2
+    if recommended_features:
+        rec_indices = [i for i, f in enumerate(feature_names) if f in set(recommended_features)]
+        if rec_indices:
+            logger.info(f"Subsetting from {X.shape[1]} to {len(rec_indices)} recommended features")
+            X = X[:, rec_indices]
+            feature_names = [feature_names[i] for i in rec_indices]
+
+            # Recompute mechanism_indices against the new feature ordering
+            if mechanism_indices is not None:
+                old_to_new = {old: new for new, old in enumerate(rec_indices)}
+                remapped = {}
+                for mech, old_indices in mechanism_indices.items():
+                    new_indices = [old_to_new[i] for i in old_indices if i in old_to_new]
+                    if new_indices:
+                        remapped[mech] = new_indices
+                mechanism_indices = remapped
+                logger.info(f"Remapped mechanism indices: {list(mechanism_indices.keys())}")
+
     # Build model kwargs
     if args.architecture == "base":
         model_kwargs = {
@@ -1041,10 +1060,14 @@ def main():
             mechanism_indices = {}
             prefixes = {
                 "splicing": ["spliceai_", "genesplicer_"],
-                "rna": ["rnafold_"],
+                "rna_structure": ["rnafold_"],
                 "mirna": ["miranda_"],
-                "ptm": ["netnglyc_", "netphos_"],
-                "other": []
+                "glycosylation": ["netnglyc_"],
+                "phosphorylation": ["netphos_"],
+                "protein_structure": ["netsurfp_"],
+                "evolution": ["evmutation_", "evmutation_codon_", "evmutation_protein_"],
+                "immune": ["netmhc_"],
+                "translational_efficiency": ["codon_usage_", "rare_codon_"],
             }
 
             for mech, prefs in prefixes.items():
@@ -1074,8 +1097,8 @@ def main():
 
     elif args.architecture == "gated":
         # Identify regulatory and protein indices
-        regulatory_prefixes = ["spliceai_", "genesplicer_", "rnafold_", "miranda_"]
-        protein_prefixes = ["netnglyc_", "netphos_", "netsurfp_", "netmhc_", "evmutation_"]
+        regulatory_prefixes = ["spliceai_", "genesplicer_", "rnafold_", "miranda_", "codon_usage_", "rare_codon_"]
+        protein_prefixes = ["netnglyc_", "netphos_", "netsurfp_", "netmhc_", "evmutation_", "evmutation_codon_", "evmutation_protein_"]
 
         regulatory_indices = []
         protein_indices = []

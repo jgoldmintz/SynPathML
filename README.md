@@ -83,16 +83,37 @@ Copy `config.template.json` to `config.json` and edit:
 
 ## Usage
 
+### Data Preparation (from pipeline TSV directory)
+
+```bash
+# Load multiple pipeline TSVs + ground truth CSV, join on pkey
+python data_loader.py \
+    --tsv-dir pipeline_outputs/ \
+    --config config.json \
+    --output-dir prepared/
+```
+
+The `--tsv-dir` directory should contain:
+- Pipeline output TSVs named by pipeline (e.g., `spliceai.tsv`, `rnafold.tsv`, `miranda.tsv`)
+- A ground truth CSV with label and mutation type columns (auto-detected by header)
+
+Column names from each pipeline TSV are prefixed with the pipeline name (e.g., `spliceai_max_delta_score`). The mapping from filename to prefix is configured in `config.json` under `tsv_dir.pipeline_map`.
+
 ### Stage 1: Feature Selection
 
 ```bash
+# From prepared data directory
+python stage1_feature_selection.py \
+    --input prepared/ \
+    --output-dir results/stage1
+
 # From SQL database
 python stage1_feature_selection.py \
     --sql \
     --config config.json \
     --output-dir results/stage1
 
-# From TSV file
+# From single TSV file
 python stage1_feature_selection.py \
     --input data.tsv \
     --output-dir results/stage1

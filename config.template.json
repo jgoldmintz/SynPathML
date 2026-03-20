@@ -28,5 +28,28 @@
             "transcript_id"
         ],
         "include": null
+    },
+    "tsv_dir": {
+        "pipeline_map": {
+            "spliceai": "spliceai",
+            "rnafold": "rnafold",
+            "miranda": "miranda",
+            "genesplicer": "genesplicer",
+            "netsurfp3.summary": "netsurfp",
+            "netsurfp": "netsurfp",
+            "netmhc": "netmhc",
+            "evmutation.codon": "evmutation_codon",
+            "evmutation.protein": "evmutation_protein",
+            "netnglyc": "netnglyc",
+            "netphos": "netphos",
+            "codon_usage": "codon_usage",
+            "rare_codon": "rare_codon"
+        },
+        "ground_truth_columns": {
+            "Pkey": "pkey",
+            "Gene": "gene",
+            "non-synonymous-1; synonymous-2": "is_synonymous",
+            "disease-associated;1-yes, 2-no": "is_pathogenic"
+        }
     }
 }

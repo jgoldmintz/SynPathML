@@ -5,3 +5,4 @@ stage_explanations.txt
 results/
 *.npy
 *.pt
+SynPathML_groundTruth.csv
