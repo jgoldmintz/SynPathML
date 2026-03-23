@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# SynPathML
+# Copyright (C) 2023-2026  Jacob Goldmintz
+# All rights reserved. See LICENSE for terms.
+
 """
 Stage 2: Feature Analysis
 Analyzes Stage 1 results to identify high-confidence features,

@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# SynPathML
+# Copyright (C) 2023-2026  Jacob Goldmintz
+# All rights reserved. See LICENSE for terms.
+
 """
 Data loader for ML pipeline.
 Supports loading from SQL database or TSV file.

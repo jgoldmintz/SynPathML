@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# SynPathML
+# Copyright (C) 2023-2026  Jacob Goldmintz
+# All rights reserved. See LICENSE for terms.
+
 """
 Shared utilities for ML pipeline.
 Provides metrics computation, calibration, plotting, and logging functions.

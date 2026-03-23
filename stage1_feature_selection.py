@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# SynPathML
+# Copyright (C) 2023-2026  Jacob Goldmintz
+# All rights reserved. See LICENSE for terms.
+
 """
 Stage 1: Feature Selection & Importance
 Runs L1/L2 Logistic Regression, Elastic Net, Random Forest, and SHAP analysis.
